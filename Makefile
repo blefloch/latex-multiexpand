@@ -2,29 +2,29 @@ TESTFILE = multiexpand-example
 TESTFILETMP = $(TESTFILE).aux $(TESTFILE).mtc* $(TESTFILE).maf $(TESTFILE).mw $(TESTFILE).lo* $(TESTFILE).toc
 TMPDIR = tmp.multiexpand
 
-package:
+unpack:
 	pdflatex multiexpand.dtx
 
-documentation: package
+documentation: unpack
 	pdflatex multiexpand.dtx
 	pdflatex multiexpand.dtx
 
-testfile:
+testfile: unpack
 	pdflatex multiexpand-example.tex
 
-tds: package documentation
+tds: unpack documentation
 	rm -rf $(TMPDIR)
 	mkdir -p $(TMPDIR)/tex/latex/multiexpand
 	mkdir -p $(TMPDIR)/doc/latex/multiexpand
 	mkdir -p $(TMPDIR)/source/latex/multiexpand
-	cp README $(TMPDIR)/doc/latex/multiexpand/
+	cp README.md $(TMPDIR)/doc/latex/multiexpand/README
 	cp multiexpand.ins $(TMPDIR)/source/latex/multiexpand/
 	cp multiexpand.dtx $(TMPDIR)/source/latex/multiexpand/
 	cp multiexpand.pdf $(TMPDIR)/doc/latex/multiexpand/
 	cp multiexpand.sty $(TMPDIR)/tex/latex/multiexpand/
 	(cd $(TMPDIR) && zip -9r ../multiexpand.tds.zip *)
 
-all: package documentation testfile tds clean
+all: unpack documentation testfile tds clean
 
 clean:
 	@echo \
