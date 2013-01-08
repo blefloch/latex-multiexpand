@@ -1,0 +1,315 @@
+% \iffalse meta-comment
+%<*internal>
+\iffalse
+%</internal>
+%<*readme>
+Variations on the `\expandafter` TeX primitive
+==============================================
+* E-mail: blflatex@gmail.com
+* Released under the LaTeX Project Public License v1.3c or later
+  See http://www.latex-project.org/lppl.txt
+
+Every TeX programmer knows `\expandafter`, and how messy it can become
+when trying to expand several times a very deeply hidden token. For
+example, say we want to expand `\C` four times before `\A` and `\B` in
+`\A\B\C`.  The traditional approach would be to insert 15 `\expandafter`
+before `\A` and the same number before `\B`. This package allows the two
+simpler codes
+
+    \expandafter\A\expandafter\B\romannumeral\multiexpand{4}\C
+
+or
+
+    \expandafter\A\romannumeral\multiexpandafter{4}\B\C
+
+In one step of expansion (triggered by the `\expandafter`'s), the
+sequence `\romannumeral\multiexpand{4}` expands the following token 4
+times, whereas `\romannumeral\multiexpandafter{4}` expands the token
+after that 4 times.
+
+The code behaves with braces as `\expandafter` would. Another example is
+
+    \MultiExpandAfter{2}\a\MultiExpandAfter{3}{%
+      \MultiExpandAfter{10}\b\MultiExpandAfter{10}\c\d},
+
+which expands `\d` 10 times, then `\c` 8 times, then `\b` once.
+The whole process will only take two steps of expansion.
+
+
+The package can be built from the file `multiexpand.dtx' by running
+
+    pdflatex multiexpand.dtx
+    pdflatex multiexpand.dtx
+    pdflatex multiexpand-example.tex
+
+The last step is optional: it runs a series of tests.
+%</readme>
+%<*example>
+ \input multiexpand.sty\relax
+ % |\expandonce| redefines its argument |#1| as |#1| expanded once.
+ \long\gdef\expandonce#1{%
+   \long\edef#1{\unexpanded\expandafter\expandafter\expandafter{#1}}}
+ % Commands that expand to each other, to count how many times things
+ % were expanded.
+ \def\0{\1}    \def\1{\2}    \def\2{\3}    \def\3{\4}    \def\4{\5}
+ \def\5{\6}    \def\6{\7}    \def\7{\8}    \def\8{\9}    \def\9{\0x}
+ % We test |\MultiExpand|, which needs two expansions. In particular, we see
+ % that the implementation is reasonably quick, and we get the $2011$-th
+ % expansion of |\0|.
+ \long\gdef\a{\MultiExpand{2011}\0}   \expandonce\a  \expandonce\a
+ \long\gdef\b{\1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
+   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
+   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
+ \ifx\a\b\message{Correct! }\else\show\WRONG\fi
+ %
+ % Test |\MultiExpandAfter|, two expansions to get the specified expansion.
+ % The results also show that the expansion happens in the expected order.
+ \long\gdef\a{%
+   \MultiExpandAfter{27}\0% note that we get \5xx (25=27-2).
+   \MultiExpandAfter{14}\0% note that we get \2x (12=14-2).
+   \MultiExpandAfter{38}\0\0}% note that we get \8xxx... no "-2".
+ \expandonce\a \expandonce\a
+ \long\gdef\b{\0\5xx\2x\8xxx}
+ \ifx\a\b\message{Correct! }\else\show\WRONG\fi
+ %
+ % For comparison, the "Hello World!" example
+ \def\a#1.{#1}
+ \def\b#1:{#1.}
+ \def\c#1,{#1:}
+ \def\d{Hello world!,}
+ \edef\foo{\unexpanded\MultiExpandAfter{3}{%
+     \MultiExpandAfter{3}\a
+     \MultiExpandAfter{3}\b
+     \MultiExpandAfter{1}\c
+     \d}}
+ \def\fooB{Hello world!}
+ \ifx\foo\fooB\message{Correct! }\else\show\WRONG\fi
+ % now uses 32 \expandafters, slightly better than Hendrik's solution (however, we should count the overhead with all the \csname and friends). The other example on which Hendrik was optimizing, namely, expanding seven tokens once each in the reverse order, takes 74 \expandafter:
+ \def\a{a}    \def\b{b}    \def\c{c}    \def\d{d}
+ \def\e{e}    \def\f{f}    \def\g{g}
+ \begingroup\tracingall\tracingonline=0\relax
+ \xdef\foo{\unexpanded\MultiExpandAfter{2}{%
+     \MultiExpandAfter3\a    \MultiExpandAfter3\b
+     \MultiExpandAfter3\c    \MultiExpandAfter3\d
+     \MultiExpandAfter3\e    \MultiExpandAfter1\f\g}}
+ \endgroup
+ % Some experimentation tells me that the number of \expandafter is roughly 5 times the sum of the arguments of the various \MultiExpandAfter.
+ \csname bye\endcsname
+ \csname stop\endcsname
+%</example>
+%<*internal>
+\fi
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX\else
+  \expandafter\begingroup
+\fi
+%</internal>
+%<*install>
+\input docstrip.tex
+\keepsilent
+\askforoverwritefalse
+\preamble
+----------------------------------------------------------------
+multiexpand --- trigger multiple expansions in one expansion step.
+E-mail: blflatex@gmail.com
+Released under the LaTeX Project Public License v1.3c or later
+See http://www.latex-project.org/lppl.txt
+----------------------------------------------------------------
+
+\endpreamble
+\postamble
+
+Copyright (C) 2011-2013 by Bruno Le Floch <blflatex@gmail.com>
+
+This work may be distributed and/or modified under the
+conditions of the LaTeX Project Public License (LPPL), either
+version 1.3c of this license or (at your option) any later
+version.  The latest version of this license is in the file:
+
+http://www.latex-project.org/lppl.txt
+
+This work is "maintained" (as per LPPL maintenance status) by
+Bruno Le Floch.
+
+This work consists of the file  multiexpand.dtx
+and the derived files           multiexpand.ins,
+                                multiexpand.pdf and
+                                multiexpand.sty.
+
+\endpostamble
+\usedir{tex/latex/multiexpand}
+\generate{
+  \file{\jobname.sty}{\from{\jobname.dtx}{package}}
+}
+%</install>
+%<install>\endbatchfile
+%<*internal>
+\usedir{source/latex/multiexpand}
+\generate{
+  \file{\jobname.ins}{\from{\jobname.dtx}{install}}
+}
+\usedir{source/latex/multiexpand}
+\generate{
+  \file{\jobname-example.tex}{\from{\jobname.dtx}{example}}
+}
+\nopreamble\nopostamble
+\usedir{doc/latex/multiexpand}
+\generate{
+  \file{README.md}{\from{\jobname.dtx}{readme}}
+}
+
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</internal>
+%<*driver>
+\documentclass[12pt]{ltxdoc}
+\usepackage[T1]{fontenc}
+\usepackage{multiexpand}
+\usepackage[margin=4cm]{geometry}
+\usepackage{hyperref}
+\RecordChanges
+\begin{document}
+  \DocInput{multiexpand.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{60}
+%
+% \def\fileversion{1.1} \def\filedate{2013/01/08}
+%\title{\texttt{multiexpand}\\
+%  Trigger multiple expansions \\ in one expansion step\thanks{This file
+%    describes version \fileversion, last revised \filedate.}}
+%\author{Bruno Le Floch\thanks{E-mail: blflatex@gmail.com}
+%  \thanks{I have gathered ideas from various posts in the \texttt{\{TeX\}}
+%    community at \url{http://tex.stackexchange.com}. Thanks to their authors.}}
+%\date{Released \filedate}
+%
+%\maketitle
+%
+% \tableofcontents
+% \changes{v1.0}{2011/02/15}{First version with documentation}
+% \changes{v1.1}{2013/01/08}{Version submitted to CTAN}
+%
+% \section{Two user commands}
+%
+% \begin{itemize}
+% \item For $n>0$, expanding |\MultiExpand{|$n$|}\macro| twice gives
+%   the $n$-th expansion of |\macro|.
+% \item For $n>0$, expanding |\MultiExpandAfter{|$n$|}\macroA\macroB|
+%   twice expands |\macroB| $n$ times before expanding |\macroA|.
+% \end{itemize}
+% Note that neither functions work for $n = 0$.
+%
+% These can typically be combined as
+% \begin{verbatim}
+% \MultiExpand{7}%
+% \MultiExpandAfter{4}\a\MultiExpandAfter{7}\b%
+% \MultiExpandAfter{3}\c\d
+% \end{verbatim}
+% which would expand |\d| $3$~times, then |\c| $5$~times ($2$~of the $7$~times
+% were used to expand |\MultiExpandAfter{3}|), then |\b| twice ($4-2$), and
+% finally |\a| five times ($7-2$). Note that all this happens in precisely
+% \emph{two} steps of expansion.
+%
+% In some cases, one needs to achieve the same effect in \emph{one} step
+% only.  For this, we use the first expansion of |\MultiExpand|, which
+% is |\romannumeral| |\multiexpand|, or of |\MultiExpandAfter|, which is
+% |\romannumeral| |\multiexpandafter|).  Expanding |\romannumeral|
+% |\multiexpand{|$n$|}| once expands the following token $n$ times, and
+% similarly for |\romannumeral| |\multiexpandafter{|$n$|}|.
+%
+% These are especially useful when we want to expand several times a
+% very specific token which is buried behind many others. Example:
+% expanding the following code twice,
+% \begin{verbatim}
+% \MultiExpand{3}\expandafter\macroA\expandafter\macroB%
+% \romannumeral\multiexpandafter{4}\macroC\macroD
+% \end{verbatim}
+% will expand |\macroD| $4$ times, then will expand |\macroA| $2=3-1$
+% additional times.
+%
+% Note: as we mentionned, this breaks for $n=0$. But in this case, consider
+% using |\expandafter\empty|, or a variant thereof.
+%
+% \section{How it works}
+%
+% The primitive |\romannumeral| expands what follows fully until it builds
+% a full number. It will remove exactly one trailing space if the first
+% non-digit token is a space. So if we expand the construction
+% |\romannumeral0\expandafter\space| once, then |\romannumeral| will see
+% the |0|, and expand |\expandafter|: it cannot yet be sure that it won't
+% find another digit afterwards. This expands the next token once. In other
+% words, |\romannumeral0\expandafter\space| behaves as if it was not there.
+%
+% This is how we end our loop. Namely, |\multiexpand|\marg{$n$} checks
+% if $n<2$, in which case it stops with |0\expandafter\space|. If $n\geq 2$,
+% then it simply expands to |\multiexpand|\marg{$n-1$}, plus the relevant
+% |\expandafter|s meant to expand the next token once.\footnote{Note
+%   to self: Possible optimization: put three \cs{expandafter} rather than
+%   one at the end, to to two expansions at once.}
+%
+% \section{Implementation}
+%\StopEventually{\PrintChanges\PrintIndex}
+%    \begin{macrocode}
+%<*package>
+%    \end{macrocode}
+%
+% We work inside a group, to change the catcode of |@|. So we will only
+% do |\gdef|s. We also define a macro |\ME@use|.
+%    \begin{macrocode}
+\begingroup
+\catcode`\@=11\relax%
+\gdef\ME@use#1{#1}%
+%    \end{macrocode}
+%
+% |\MultiExpand| and |\MultiExpandAfter| are simply shorthands to avoid
+% typing |\romannumeral|. Drawback: they require two steps of expansion
+% rather than only one.
+%    \begin{macrocode}
+\gdef\MultiExpand{\romannumeral\multiexpand}%
+\gdef\MultiExpandAfter{\romannumeral\multiexpandafter}%
+%    \end{macrocode}
+%
+% The |\romannumeral| is stopped by |0\space|. We insert the relevant
+% |\expandafter| to do the work.
+%    \begin{macrocode}
+\xdef\ME@endroman#1{0\noexpand\expandafter\space}%
+\xdef\ME@endroman@after#1{0\noexpand\expandafter\space\noexpand\expandafter}%
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\long\gdef\multiexpand#1{%
+  \ifnum#1<2 \expandafter \ME@endroman%
+  \else      \expandafter \ME@use%
+  \fi%
+  {\expandafter \multiexpand \expandafter {%
+      \number\numexpr#1-1\expandafter}}%
+}%
+%    \end{macrocode}
+% Almost identical definitions for expanding after...
+%    \begin{macrocode}
+\long\gdef\multiexpandafter#1{%
+  \ifnum#1<2 \expandafter\ME@endroman@after%
+  \else      \expandafter \ME@use%
+  \fi%
+  {\expandafter \multiexpandafter \expandafter {%
+      \number\numexpr#1-1\expandafter}\expandafter}%
+}%
+%    \end{macrocode}
+% Close the group.
+%    \begin{macrocode}
+\endgroup
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+%</package>
+%    \end{macrocode}
+%\Finale
+\endinput
+
+
+
