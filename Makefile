@@ -38,4 +38,7 @@ delete non-existent files. This is not a problem."
 	  > /dev/null 2>&1
 	-rm $(TESTFILETMP) > /dev/null 2>&1
 	-rm -rf $(TMPDIR)
-	-rm multiexpand.ins
+
+cleanall: clean
+	-rm multiexpand.ins multiexpand.pdf multiexpand.sty
+	-rm $(TESTFILE).tex
