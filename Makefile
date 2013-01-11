@@ -24,7 +24,13 @@ tds: unpack documentation
 	cp multiexpand.sty $(TMPDIR)/tex/latex/multiexpand/
 	(cd $(TMPDIR) && zip -9r ../multiexpand.tds.zip *)
 
-all: unpack documentation testfile tds clean
+zip: unpack documentation tds
+	cp README.md README
+	zip multiexpand.zip \
+	  multiexpand.dtx multiexpand.pdf multiexpand.tds.zip README
+	rm README
+
+all: unpack documentation testfile tds zip cleanall
 
 clean:
 	@echo \
