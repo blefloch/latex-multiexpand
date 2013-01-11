@@ -177,9 +177,9 @@ and the derived files           multiexpand.ins,
 %</driver>
 % \fi
 %
-% \CheckSum{60}
+% \CheckSum{49}
 %
-% \def\fileversion{1.1} \def\filedate{2013/01/08}
+% \def\fileversion{1.2} \def\filedate{2013/01/08}
 %\title{\texttt{multiexpand}\\
 %  Trigger multiple expansions \\ in one expansion step\thanks{This file
 %    describes version \fileversion, last revised \filedate.}}
@@ -193,6 +193,8 @@ and the derived files           multiexpand.ins,
 % \tableofcontents
 % \changes{v1.0}{2011/02/15}{First version with documentation}
 % \changes{v1.1}{2013/01/08}{Version submitted to CTAN}
+% \changes{v1.2}{2013/01/09}{Use less expandafter for large arguments}
+% \changes{v1.2}{2013/01/09}{Change ME prefix to multiexpand}
 %
 % \section{Two user commands}
 %
@@ -218,7 +220,7 @@ and the derived files           multiexpand.ins,
 % In some cases, one needs to achieve the same effect in \emph{one} step
 % only.  For this, we use the first expansion of |\MultiExpand|, which
 % is |\romannumeral| |\multiexpand|, or of |\MultiExpandAfter|, which is
-% |\romannumeral| |\multiexpandafter|).  Expanding |\romannumeral|
+% |\romannumeral| |\multiexpandafter|.  Expanding |\romannumeral|
 % |\multiexpand{|$n$|}| once expands the following token $n$ times, and
 % similarly for |\romannumeral| |\multiexpandafter{|$n$|}|.
 %
@@ -250,7 +252,7 @@ and the derived files           multiexpand.ins,
 % then it simply expands to |\multiexpand|\marg{$n-1$}, plus the relevant
 % |\expandafter|s meant to expand the next token once.\footnote{Note
 %   to self: Possible optimization: put three \cs{expandafter} rather than
-%   one at the end, to to two expansions at once.}
+%   one at the end, to do two expansions at once.}
 %
 % \section{Implementation}
 %\StopEventually{\PrintChanges\PrintIndex}
@@ -259,47 +261,57 @@ and the derived files           multiexpand.ins,
 %    \end{macrocode}
 %
 % We work inside a group, to change the catcode of |@|. So we will only
-% do |\gdef|s. We also define a macro |\ME@use|.
+% do |\gdef|s.  Note that this code can be read several times with no
+% issue; no need to bother to check whether it was already read or not.
 %    \begin{macrocode}
 \begingroup
-\catcode`\@=11\relax%
-\gdef\ME@use#1{#1}%
+\catcode `\@=11
 %    \end{macrocode}
 %
-% |\MultiExpand| and |\MultiExpandAfter| are simply shorthands to avoid
-% typing |\romannumeral|. Drawback: they require two steps of expansion
-% rather than only one.
+% The main looping macros expect their arguments as an integer followed
+% by a semicolon.  As long as the argument is at least~$2$, decrement
+% it, and expand what follows.  Once the argument is~$1$ (or less: the
+% macros are not meant to handle that case), call |\multiexpand@end| to clean up
+% and stop looping.
 %    \begin{macrocode}
-\gdef\MultiExpand{\romannumeral\multiexpand}%
-\gdef\MultiExpandAfter{\romannumeral\multiexpandafter}%
+\gdef \multiexpand@ #1;%
+  {%
+    \ifnum #1<2 \multiexpand@end \fi
+    \expandafter \multiexpand@
+    \the \numexpr #1-1\expandafter ;%
+  }
+\gdef \multiexpand@after #1;%
+  {%
+    \ifnum #1<2 \multiexpand@end \fi
+    \expandafter \multiexpand@after
+    \the \numexpr #1-1\expandafter ;\expandafter
+  }
+%    \end{macrocode}
+% The looping macros are used within an overarching |\romannumeral|
+% expansion, which we end with a |0| and a space, as well as the
+% appropriate |\expandafter|.  Here, |#1| is |\fi| which needs to remain
+% to close the conditional, |#2| is |\expandafter|, and there is a
+% trailing |\expandafter| in the case of |\multiexpand@after|.
+%    \begin{macrocode}
+\gdef \multiexpand@end #1#2#3;{#10#2 }
+%    \end{macrocode}
+% Finally, user commands, used as |\romannumeral| |\multiexpand(after)|.
+% Those evaluate their argument, and pass it to |\multiexpand@(after)|.
+% The argument might contain |\par| tokens (who knows)
+%    \begin{macrocode}
+\long \gdef \multiexpand #1%
+  {\expandafter \multiexpand@ \the \numexpr #1;}
+\long \gdef \multiexpandafter #1%
+  {\expandafter \multiexpand@after \the \numexpr #1;}
+%    \end{macrocode}
+% For the ``lazy'', who do not want to use |\romannumeral|, we provide
+% |\MultiExpand| and |\MultiExpandAfter|, simple shorthands.  A drawback
+% is that they require two steps of expansion rather than only one.
+%    \begin{macrocode}
+\gdef \MultiExpand {\romannumeral \multiexpand }
+\gdef \MultiExpandAfter {\romannumeral \multiexpandafter }
 %    \end{macrocode}
 %
-% The |\romannumeral| is stopped by |0\space|. We insert the relevant
-% |\expandafter| to do the work.
-%    \begin{macrocode}
-\xdef\ME@endroman#1{0\noexpand\expandafter\space}%
-\xdef\ME@endroman@after#1{0\noexpand\expandafter\space\noexpand\expandafter}%
-%    \end{macrocode}
-%
-%    \begin{macrocode}
-\long\gdef\multiexpand#1{%
-  \ifnum#1<2 \expandafter \ME@endroman%
-  \else      \expandafter \ME@use%
-  \fi%
-  {\expandafter \multiexpand \expandafter {%
-      \number\numexpr#1-1\expandafter}}%
-}%
-%    \end{macrocode}
-% Almost identical definitions for expanding after...
-%    \begin{macrocode}
-\long\gdef\multiexpandafter#1{%
-  \ifnum#1<2 \expandafter\ME@endroman@after%
-  \else      \expandafter \ME@use%
-  \fi%
-  {\expandafter \multiexpandafter \expandafter {%
-      \number\numexpr#1-1\expandafter}\expandafter}%
-}%
-%    \end{macrocode}
 % Close the group.
 %    \begin{macrocode}
 \endgroup
