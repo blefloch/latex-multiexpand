@@ -167,6 +167,7 @@ and the derived files           multiexpand.ins,
 %<*driver>
 \documentclass[12pt]{ltxdoc}
 \usepackage[T1]{fontenc}
+\usepackage{hologo}
 \usepackage{multiexpand}
 \usepackage[margin=4cm]{geometry}
 \usepackage{hyperref}
@@ -268,6 +269,123 @@ and the derived files           multiexpand.ins,
 \catcode `\@=11
 %    \end{macrocode}
 %
+% \subsection{Common to the \hologo{eTeX} and non-\hologo{eTeX} cases}
+%
+% For the ``lazy'', who do not want to use |\romannumeral|, we provide
+% |\MultiExpand| and |\MultiExpandAfter|, simple shorthands.  A drawback
+% is that they require two steps of expansion rather than only one.
+%    \begin{macrocode}
+\gdef \MultiExpand {\romannumeral \multiexpand }
+\gdef \MultiExpandAfter {\romannumeral \multiexpandafter }
+%    \end{macrocode}
+%
+% \subsection{Without \hologo{eTeX}'s \cs{numexpr}}
+%
+% No need for the usual |\begingroup\expandafter\endgroup| to prevent
+% |\numexpr| from being set to |\relax|, because we are already in a
+% group.
+%    \begin{macrocode}
+\expandafter\ifx\csname numexpr\endcsname\relax
+%    \end{macrocode}
+%
+% A helper.
+%    \begin{macrocode}
+\long\gdef\ME@gobble#1{}
+%    \end{macrocode}
+%
+% The user commands |\multiexpand| and |\multiexpandafter|, to be used
+% after |\romannumeral|.  They only differ a little bit.
+%    \begin{macrocode}
+\gdef\multiexpand{\multiexpand@aux\multiexpand@}
+\gdef\multiexpandafter{\multiexpand@aux\multiexpand@after}
+%    \end{macrocode}
+% The user commands expect a number, which is simply fully expanded from
+% the left, then compared to~$0$.  If the argument is small, stop the
+% |\romannumeral| expansion with |0| and a space.  Otherwise, reverse
+% the number, to make it easy to subtract~$1$.
+%    \begin{macrocode}
+\long \gdef \multiexpand@aux #1#2%
+  {\expandafter \multiexpand@test \romannumeral -`0#2;#1}
+\long \gdef \multiexpand@test #1#2%
+  {%
+    \ifnum #1>0
+      \multiexpand@reverse #1{?\multiexpand@reverse@end }?;;#2%
+    \fi
+    0
+  }
+%    \end{macrocode}
+% Put characters from the number one by one (as~|#1|) after the
+% semicolon, to reverse the number.  The number is followed by
+% |{?\multiexpand@reverse@end}|: the question mark is removed by
+% |\multiexpand@gobble|, and the next token cleans up.  In particular,
+% one should not forget the trailing |\fi|, here the argument |#5| of
+% the ending function.  At this stage, |#4| is the function that
+% distinguishes |\multiexpand| from |\multiexpand@after|, and |#3| is
+% the reversed number.
+%    \begin{macrocode}
+\gdef \multiexpand@reverse #1#2;%
+  {\multiexpand@gobble #1\multiexpand@reverse #2;#1}
+\gdef \multiexpand@reverse@end #1;?#2#3;#4#50
+  {#5\multiexpand@iterate #41;1#3;}
+%    \end{macrocode}
+% The syntax for |\multiexpand@iterate| is \meta{function}
+% \meta{nines} |1|\meta{reversed number}|;|.  For instance, after
+% |\multiexpand{302}| the successive calls to |\multiexpand@iterate|
+% would go as follows.
+% \begin{verbatim}
+%   \multiexpand@iterate \multiexpand@  1203;
+%   \multiexpand@iterate \multiexpand@  1103;
+%   \multiexpand@iterate \multiexpand@  1003;
+%   \multiexpand@iterate \multiexpand@ 9 103;
+%   \multiexpand@iterate \multiexpand@ 99 13;
+%   \multiexpand@iterate \multiexpand@  1992;
+%   \multiexpand@iterate \multiexpand@  1892;
+%   \multiexpand@iterate \multiexpand@  1792;
+% \end{verbatim}
+% Note in particular how carries are done in several steps.  The details
+% are left as an exercise to the reader.  The most common case is when
+% |#2| is empty and |#3| is a non-zero digit.  Then |\number| is
+% expanded, triggering |\ifcase| which shifts |#3| by one unit, and |#1|
+% takes care of expanding the tokens are required by |\multiexpand| or
+% |\multiexpandafter|.  If |#3| is~$0$, then |\multiexpand@zero| is
+% called, closing the conditional with |#1|, and iterating, this time
+% with a non-empty \meta{nines}, which are the argument |#2| of a new
+% call to |\multiexpand@iterate|.  Those \meta{nines} are put back into
+% the number by |\multiexpand@iterate|, unless the next significant
+% digit is also $0$, in which case |\multiexpand@zero| is called again,
+% until finding a non-zero digit; at each step, one more $9$ is added to
+% the \meta{nines}.  If all digits are zero, we reach |;| this way, and
+% end, after cleaning up.
+%    \begin{macrocode}
+\gdef \multiexpand@iterate #1#21#3%
+  {%
+    \ifx ;#3\multiexpand@end \fi
+    \ifx 0#3\multiexpand@zero \fi
+    \expandafter \multiexpand@iterate
+    \expandafter #1%
+    \number 1#2%
+      \ifcase #3 \or 0\or 1\or 2\or 3\or 4\or 5\or 6\or 7\or 8\fi
+      #1%
+  }
+\gdef\multiexpand@zero#1#2\number1#3\ifcase#4\fi#5%
+  {#1\multiexpand@iterate#59#31}
+\gdef\multiexpand@end#1#2\ifcase#3\fi#4;{0 }
+%    \end{macrocode}
+% Finally, the two different expansion commands.
+%    \begin{macrocode}
+\gdef\multiexpand@#1;{#1\expandafter;}
+\gdef\multiexpand@after#1;{#1\expandafter;\expandafter}
+%    \end{macrocode}
+%
+% \subsection{With \hologo{eTeX}}
+%
+%    \begin{macrocode}
+\else
+%    \end{macrocode}
+%
+% With \hologo{eTeX}, everything is much easier, since the engine knows
+% how to subtract~$1$.
+%
 % The main looping macros expect their arguments as an integer followed
 % by a semicolon.  As long as the argument is at least~$2$, decrement
 % it, and expand what follows.  Once the argument is~$1$ (or less: the
@@ -304,12 +422,9 @@ and the derived files           multiexpand.ins,
 \long \gdef \multiexpandafter #1%
   {\expandafter \multiexpand@after \the \numexpr #1;}
 %    \end{macrocode}
-% For the ``lazy'', who do not want to use |\romannumeral|, we provide
-% |\MultiExpand| and |\MultiExpandAfter|, simple shorthands.  A drawback
-% is that they require two steps of expansion rather than only one.
+%
 %    \begin{macrocode}
-\gdef \MultiExpand {\romannumeral \multiexpand }
-\gdef \MultiExpandAfter {\romannumeral \multiexpandafter }
+\fi
 %    \end{macrocode}
 %
 % Close the group.
