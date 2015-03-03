@@ -266,7 +266,6 @@ and the derived files           multiexpand.ins,
 % \changes{v1.1}{2013/01/08}{Version submitted to CTAN}
 % \changes{v1.2}{2013/01/09}{Use less expandafter for large arguments}
 % \changes{v1.2}{2013/01/09}{Change ME prefix to multiexpand}
-% \changes{v1.3}{2015/03/03}{Support versions of TeX with no numexpr}
 %
 % \section{Two user commands}
 %
@@ -308,23 +307,6 @@ and the derived files           multiexpand.ins,
 % Note: as we mentionned, this breaks for $n=0$. But in this case, consider
 % using |\expandafter\empty|, or a variant thereof.
 %
-% \section{How it works}
-%
-% The primitive |\romannumeral| expands what follows fully until it builds
-% a full number. It will remove exactly one trailing space if the first
-% non-digit token is a space. So if we expand
-% |\romannumeral0\expandafter\space| once, then |\romannumeral| will see
-% the |0|, and expand |\expandafter|: it cannot yet be sure that it won't
-% find another digit afterwards. This expands the next token once. In other
-% words, |\romannumeral0\expandafter\space| behaves as if it was not there.
-%
-% This is how we end our loop. Namely, |\multiexpand|\marg{$n$} checks
-% if $n<2$, in which case it stops with |0\expandafter\space|. If $n\geq 2$,
-% then it simply expands to |\multiexpand|\marg{$n-1$}, plus the relevant
-% |\expandafter|s meant to expand the next token once.\footnote{Note
-%   to self: Possible optimization: put three \cs{expandafter} rather than
-%   one at the end, to do two expansions at once.}
-%
 % \section{Implementation}
 %\StopEventually{\PrintChanges\PrintIndex}
 %    \begin{macrocode}
@@ -350,6 +332,7 @@ and the derived files           multiexpand.ins,
 %    \end{macrocode}
 %
 % \subsection{Without \hologo{eTeX}'s \cs{numexpr}}
+% \changes{v1.3}{2015/03/03}{Support TeX with no numexpr}
 %
 % No need for the usual |\begingroup\expandafter\endgroup| to prevent
 % |\numexpr| from being set to |\relax|, because we are already in a
