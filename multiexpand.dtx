@@ -46,41 +46,41 @@ The last step is optional: it runs a series of tests.
  \input multiexpand.sty\relax
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- % Introduce |\expandonce| which redefines its argument |#1| as
- % |#1|-expanded-once.  Also introduce commands that expand to each
- % other, to count how many times things were expanded.
+ % Introduce commands that expand to each other, to count how many times
+ % things were expanded.
  \OMIT
- \long\gdef\expandonce#1{%
-   \long\edef#1{\unexpanded\expandafter\expandafter\expandafter{#1}}}
- \def\0{\1}    \def\1{\2}    \def\2{\3}    \def\3{\4}    \def\4{\5}
- \def\5{\6}    \def\6{\7}    \def\7{\8}    \def\8{\9}    \def\9{\0x}
+ \def\i{}
+ \def\v{\i\i\i\i}
+ \def\x{\i\i\i\i\v}
+ \def\l{\i\i\i\i\v\x\x\x\x}
+ \def\c{\i\i\i\i\v\x\x\x\x\l}
+ \def\d{\i\i\i\i\v\x\x\x\x\l\c\c\c\c}
+ \def\m{\i\i\i\i\v\x\x\x\x\l\c\c\c\c\d}
  \TIMO
- %
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % We test |\MultiExpand|, which needs two expansions. In particular, we see
- % that the implementation is reasonably quick, and we get the $2011$-th
- % expansion of |\0|.
- \TEST{MultiExpand a lot}{%
-   \long\gdef\a{\MultiExpand{2011}\0}
-   \expandonce\a
-   \expandonce\a
-   \long\gdef\b{\1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
-     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
-     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}%
-   \TYPE{\ifx\a\b\TRUE\else\ERROR\fi}%
+ % that the implementation is reasonably quick, and we get the $2345$-th
+ % expansion of |\m\m\m\m|.
+ % 4000-2345 = 1655 = mdclv
+ \TEST{MultiExpand many times (vlcdm)}{%
+   \toks0\expandafter\expandafter\expandafter{\MultiExpand{2345}\m\m\m\m}%
+   \TYPE{\the\toks0.}%
  }
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % Test |\MultiExpandAfter|, two expansions to get the specified expansion.
  % The results indirectly show that expansions happen in the expected order.
- \TEST{MultiExpandAfter chain}{%
-   \long\gdef\a{%
-     \MultiExpandAfter{27}\0% note that we get \5xx (25=27-2).
-     \MultiExpandAfter{14}\0% note that we get \2x (12=14-2).
-     \MultiExpandAfter{38}\0\0}% note that we get \8xxx... no "-2".
-   \expandonce\a
-   \expandonce\a
-   \long\gdef\b{\0\5xx\2x\8xxx}%
-   \TYPE{\ifx\a\b\TRUE\else\ERROR\fi}%
+ % 100 = c
+ % 100-(27-2) = 75 = lxxv
+ % 100-(14-2) = 88 = lxxxviii
+ % 100-38 = 62 = lxii
+ \TEST{MultiExpandAfter chain (c vxxl iiivxxxl iixl)}{%
+   \toks0\expandafter\expandafter\expandafter{%
+     \MultiExpandAfter{27}\c
+     \MultiExpandAfter{14}\c
+     \MultiExpandAfter{38}\c\c}%
+   \TYPE{\the\toks0.}%
  }
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -97,13 +97,12 @@ The last step is optional: it runs a series of tests.
  \TIMO
  %
  \TEST{MultiExpandAfter order}{%
-   \edef\foo{\unexpanded\MultiExpandAfter{3}{%
+   \toks0\MultiExpandAfter{3}{%
      \MultiExpandAfter{3}\a
      \MultiExpandAfter{3}\b
      \MultiExpandAfter{1}\c
-     \d}}%
-   \def\fooB{Hello world!}%
-   \TYPE{\ifx\foo\fooB\TRUE\else\ERROR\fi}%
+     \d}%
+   \TYPE{\the\toks0}%
  }
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,12 +114,11 @@ The last step is optional: it runs a series of tests.
  \TIMO
  %
  \TEST{MultiExpandAfter order (2)}{%
-   \xdef\foo{\unexpanded\MultiExpandAfter{2}{%
+   \toks0\MultiExpandAfter{2}{%
      \MultiExpandAfter3\a    \MultiExpandAfter3\b
      \MultiExpandAfter3\c    \MultiExpandAfter3\d
-     \MultiExpandAfter3\e    \MultiExpandAfter1\f\g.}}%
-   \def\fooB{\a.bcdefg}%
-   \TYPE{\ifx\foo\fooB\TRUE\else\ERROR\fi}%
+     \MultiExpandAfter3\e    \MultiExpandAfter1\f\g.}%
+   \TYPE{\the\toks0}%
  }
 
  \END
@@ -147,24 +145,24 @@ Don't change this file in any respect.
 Author: Bruno Le Floch
 (multiexpand.sty)
 ============================================================
-TEST 1: MultiExpand a lot
+TEST 1: MultiExpand many times (vlcdm)
 ============================================================
-TRUE
+\v \l \c \d \m .
 ============================================================
 ============================================================
-TEST 2: MultiExpandAfter chain
+TEST 2: MultiExpandAfter chain (c vxxl iiivxxxl iixl)
 ============================================================
-TRUE
+\c \v \x \x \l \i \i \i \v \x \x \x \l \i \i \x \l .
 ============================================================
 ============================================================
 TEST 3: MultiExpandAfter order
 ============================================================
-TRUE
+Hello world!
 ============================================================
 ============================================================
 TEST 4: MultiExpandAfter order (2)
 ============================================================
-TRUE
+\a .bcdefg
 ============================================================
 %</tlg>
 %<*internal>
