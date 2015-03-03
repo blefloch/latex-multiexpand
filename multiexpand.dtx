@@ -34,63 +34,139 @@ The package can be built from the file `multiexpand.dtx' by running
 
     pdflatex multiexpand.dtx
     pdflatex multiexpand.dtx
-    pdflatex multiexpand-example.tex
+    pdflatex multiexpand001.lvt
 
 The last step is optional: it runs a series of tests.
 %</readme>
-%<*example>
+%<*lvt>
+ \input regression-test.tex\relax
+ \START
+ \AUTHOR{Bruno Le Floch}
+%<lvt002> \let\numexpr\relax
  \input multiexpand.sty\relax
- % |\expandonce| redefines its argument |#1| as |#1| expanded once.
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Introduce |\expandonce| which redefines its argument |#1| as
+ % |#1|-expanded-once.  Also introduce commands that expand to each
+ % other, to count how many times things were expanded.
+ \OMIT
  \long\gdef\expandonce#1{%
    \long\edef#1{\unexpanded\expandafter\expandafter\expandafter{#1}}}
- % Commands that expand to each other, to count how many times things
- % were expanded.
  \def\0{\1}    \def\1{\2}    \def\2{\3}    \def\3{\4}    \def\4{\5}
  \def\5{\6}    \def\6{\7}    \def\7{\8}    \def\8{\9}    \def\9{\0x}
+ \TIMO
+ %
  % We test |\MultiExpand|, which needs two expansions. In particular, we see
  % that the implementation is reasonably quick, and we get the $2011$-th
  % expansion of |\0|.
- \long\gdef\a{\MultiExpand{2011}\0}   \expandonce\a  \expandonce\a
- \long\gdef\b{\1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
-   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
-   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
- \ifx\a\b\message{Correct! }\else\show\WRONG\fi
- %
+ \TEST{MultiExpand a lot}{%
+   \long\gdef\a{\MultiExpand{2011}\0}
+   \expandonce\a
+   \expandonce\a
+   \long\gdef\b{\1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
+     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%
+     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}%
+   \TYPE{\ifx\a\b\TRUE\else\ERROR\fi}%
+ }
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  % Test |\MultiExpandAfter|, two expansions to get the specified expansion.
- % The results also show that the expansion happens in the expected order.
- \long\gdef\a{%
-   \MultiExpandAfter{27}\0% note that we get \5xx (25=27-2).
-   \MultiExpandAfter{14}\0% note that we get \2x (12=14-2).
-   \MultiExpandAfter{38}\0\0}% note that we get \8xxx... no "-2".
- \expandonce\a \expandonce\a
- \long\gdef\b{\0\5xx\2x\8xxx}
- \ifx\a\b\message{Correct! }\else\show\WRONG\fi
- %
- % For comparison, the "Hello World!" example
+ % The results indirectly show that expansions happen in the expected order.
+ \TEST{MultiExpandAfter chain}{%
+   \long\gdef\a{%
+     \MultiExpandAfter{27}\0% note that we get \5xx (25=27-2).
+     \MultiExpandAfter{14}\0% note that we get \2x (12=14-2).
+     \MultiExpandAfter{38}\0\0}% note that we get \8xxx... no "-2".
+   \expandonce\a
+   \expandonce\a
+   \long\gdef\b{\0\5xx\2x\8xxx}%
+   \TYPE{\ifx\a\b\TRUE\else\ERROR\fi}%
+ }
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Test the order of expansion.  The example was given in the original
+ % question that led to writing this package.  For the record, this
+ % package (at some point) used 32 |\expandafter| to do the expansion
+ % in the right order, which was better than other approaches; however
+ % this counting ignores the large overheads due to other primitives.
+ \OMIT
  \def\a#1.{#1}
  \def\b#1:{#1.}
  \def\c#1,{#1:}
  \def\d{Hello world!,}
- \edef\foo{\unexpanded\MultiExpandAfter{3}{%
+ \TIMO
+ %
+ \TEST{MultiExpandAfter order}{%
+   \edef\foo{\unexpanded\MultiExpandAfter{3}{%
      \MultiExpandAfter{3}\a
      \MultiExpandAfter{3}\b
      \MultiExpandAfter{1}\c
-     \d}}
- \def\fooB{Hello world!}
- \ifx\foo\fooB\message{Correct! }\else\show\WRONG\fi
- % now uses 32 \expandafters, slightly better than Hendrik's solution (however, we should count the overhead with all the \csname and friends). The other example on which Hendrik was optimizing, namely, expanding seven tokens once each in the reverse order, takes 74 \expandafter:
- \def\a{a}    \def\b{b}    \def\c{c}    \def\d{d}
- \def\e{e}    \def\f{f}    \def\g{g}
- \begingroup\tracingall\tracingonline=0\relax
- \xdef\foo{\unexpanded\MultiExpandAfter{2}{%
+     \d}}%
+   \def\fooB{Hello world!}%
+   \TYPE{\ifx\foo\fooB\TRUE\else\ERROR\fi}%
+ }
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % The other example from the same question (expanding seven tokens once
+ % each in the reverse order) takes 74 \expandafter.
+ \OMIT
+ \def\b.{.b}    \def\c.{.c}    \def\d.{.d}
+ \def\e.{.e}    \def\f.{.f}    \def\g.{.g}
+ \TIMO
+ %
+ \TEST{MultiExpandAfter order (2)}{%
+   \xdef\foo{\unexpanded\MultiExpandAfter{2}{%
      \MultiExpandAfter3\a    \MultiExpandAfter3\b
      \MultiExpandAfter3\c    \MultiExpandAfter3\d
-     \MultiExpandAfter3\e    \MultiExpandAfter1\f\g}}
- \endgroup
- % Some experimentation tells me that the number of \expandafter is roughly 5 times the sum of the arguments of the various \MultiExpandAfter.
- \csname bye\endcsname
- \csname stop\endcsname
-%</example>
+     \MultiExpandAfter3\e    \MultiExpandAfter1\f\g.}}%
+   \def\fooB{\a.bcdefg}%
+   \TYPE{\ifx\foo\fooB\TRUE\else\ERROR\fi}%
+ }
+
+ \END
+%</lvt>
+%<*tlg>
+This is a generated file for the l3build validation system.
+Don't change this file in any respect.
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%%
+Author: Bruno Le Floch
+(multiexpand.sty)
+============================================================
+TEST 1: MultiExpand a lot
+============================================================
+TRUE
+============================================================
+============================================================
+TEST 2: MultiExpandAfter chain
+============================================================
+TRUE
+============================================================
+============================================================
+TEST 3: MultiExpandAfter order
+============================================================
+TRUE
+============================================================
+============================================================
+TEST 4: MultiExpandAfter order (2)
+============================================================
+TRUE
+============================================================
+%</tlg>
 %<*internal>
 \fi
 \def\nameofplainTeX{plain}
@@ -141,12 +217,13 @@ and the derived files           multiexpand.ins,
 \usedir{source/latex/multiexpand}
 \generate{
   \file{\jobname.ins}{\from{\jobname.dtx}{install}}
-}
-\usedir{source/latex/multiexpand}
-\generate{
-  \file{\jobname-example.tex}{\from{\jobname.dtx}{example}}
+  \file{\jobname 001.lvt}{\from{\jobname.dtx}{lvt}}
+  \file{\jobname 002.lvt}{\from{\jobname.dtx}{lvt,lvt002}}
 }
 \nopreamble\nopostamble
+\generate{
+  \file{\jobname 001.tlg}{\from{\jobname.dtx}{tlg}}
+}
 \usedir{doc/latex/multiexpand}
 \generate{
   \file{README.md}{\from{\jobname.dtx}{readme}}
