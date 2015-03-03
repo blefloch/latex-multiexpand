@@ -29,6 +29,3 @@ The package can be built from the file `multiexpand.dtx' by running
 
     pdflatex multiexpand.dtx
     pdflatex multiexpand.dtx
-    pdflatex multiexpand-example.tex
-
-The last step is optional: it runs a series of tests.
