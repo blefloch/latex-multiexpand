@@ -292,19 +292,18 @@ and the derived files           multiexpand.ins,
 % In some cases, one needs to achieve the same effect in \emph{one} step
 % only.  For this, we use the first expansion of |\MultiExpand|, which
 % is |\romannumeral| |\multiexpand|, or of |\MultiExpandAfter|, which is
-% |\romannumeral| |\multiexpandafter|.  Expanding |\romannumeral|
+% |\romannumeral| |\multiexpandafter|.  In detail, expanding |\romannumeral|
 % |\multiexpand{|$n$|}| once expands the following token $n$ times, and
 % similarly for |\romannumeral| |\multiexpandafter{|$n$|}|.
 %
 % These are especially useful when we want to expand several times a
-% very specific token which is buried behind many others. Example:
-% expanding the following code twice,
+% very specific token which is buried behind many others. For instance,
+% expanding the following code once
 % \begin{verbatim}
-% \MultiExpand{3}\expandafter\macroA\expandafter\macroB%
+% \expandafter\macroA\expandafter\macroB
 % \romannumeral\multiexpandafter{4}\macroC\macroD
 % \end{verbatim}
-% will expand |\macroD| $4$ times, then will expand |\macroA| $2=3-1$
-% additional times.
+% will expand |\macroD| $4$ times before the three other macros.
 %
 % Note: as we mentionned, this breaks for $n=0$. But in this case, consider
 % using |\expandafter\empty|, or a variant thereof.
@@ -313,7 +312,7 @@ and the derived files           multiexpand.ins,
 %
 % The primitive |\romannumeral| expands what follows fully until it builds
 % a full number. It will remove exactly one trailing space if the first
-% non-digit token is a space. So if we expand the construction
+% non-digit token is a space. So if we expand
 % |\romannumeral0\expandafter\space| once, then |\romannumeral| will see
 % the |0|, and expand |\expandafter|: it cannot yet be sure that it won't
 % find another digit afterwards. This expands the next token once. In other
