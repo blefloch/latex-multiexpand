@@ -221,6 +221,7 @@ and the derived files           multiexpand.ins,
 \nopreamble\nopostamble
 \generate{
   \file{\jobname 001.tlg}{\from{\jobname.dtx}{tlg}}
+  \file{\jobname 002.tlg}{\from{\jobname.dtx}{tlg}}
 }
 \usedir{doc/latex/multiexpand}
 \generate{
@@ -369,39 +370,42 @@ and the derived files           multiexpand.ins,
 \gdef\multiexpand{\multiexpand@aux\multiexpand@}
 \gdef\multiexpandafter{\multiexpand@aux\multiexpand@after}
 %    \end{macrocode}
-% The user commands expect a number, which is simply fully expanded from
-% the left, then compared to~$0$.  If the argument is small, stop the
+% The user commands receives a number, and to accept various forms of
+% numbers we hit it with |\number|.  If it is non-positive, stop the
 % |\romannumeral| expansion with |0| and a space.  Otherwise, reverse
 % the number, to make it easy to subtract~$1$.
 %    \begin{macrocode}
 \long \gdef \multiexpand@aux #1#2%
-  {\expandafter \multiexpand@test \romannumeral -`0#2;#1}
-\long \gdef \multiexpand@test #1#2%
+  {\expandafter \multiexpand@test \number #2;#1}
+\long \gdef \multiexpand@test #1;#2%
   {%
     \ifnum #1>0
       \multiexpand@reverse #1{?\multiexpand@reverse@end }?;;#2%
     \fi
-    0
+    0 %
   }
 %    \end{macrocode}
-% Put characters from the number one by one (as~|#1|) after the
-% semicolon, to reverse the number.  The number is followed by
-% |{?\multiexpand@reverse@end}|: the question mark is removed by
-% |\multiexpand@gobble|, and the next token cleans up.  In particular,
-% one should not forget the trailing |\fi|, here the argument |#5| of
-% the ending function.  At this stage, |#4| is the function that
-% distinguishes |\multiexpand| from |\multiexpand@after|, and |#3| is
-% the reversed number.
-%    \begin{macrocode}
+% The macro |\multiexpand@reverse| puts characters from the number one
+% by one (as~|#1|) after the semicolon, to reverse the number.  After
+% the last digit, |#1| is |{?\multiexpand@reverse@end}|.  The question
+% mark is removed by |\multiexpand@gobble|, and the |reverse@end|
+% macro cleans up.  In particular, one should not forget to close the
+% conditional using~|#5|, which is the trailing~|\fi|.  At this stage,
+% |#4| is the function that distinguishes |\multiexpand| from
+% |\multiexpand@after|, and |#3| is the reversed
+% number.  \begin{macrocode}
 \gdef \multiexpand@reverse #1#2;%
   {\multiexpand@gobble #1\multiexpand@reverse #2;#1}
 \gdef \multiexpand@reverse@end #1;?#2#3;#4#50
-  {#5\multiexpand@iterate #41;1#3;}
+  {#5\multiexpand@iterate #41#3;}
 %    \end{macrocode}
-% The syntax for |\multiexpand@iterate| is \meta{function}
-% \meta{nines} |1|\meta{reversed number}|;|.  For instance, after
-% |\multiexpand{302}| the successive calls to |\multiexpand@iterate|
-% would go as follows.
+% The macro |\multiexpand@iterate| applies a \meta{function} a certain
+% number of times to what follows in the input stream.  It expects to
+% receive \meta{function} \meta{nines} |1|\meta{reversed number}|;|.
+% The argument \meta{nines}, made entirely of the digit~|9|, is used to
+% compute carries when subtracting~$1$, and is initally empty.  As a
+% concrete example, after |\multiexpand{302}| the successive
+% calls to |\multiexpand@iterate| would go as follows.
 % \begin{verbatim}
 %   \multiexpand@iterate \multiexpand@  1203;
 %   \multiexpand@iterate \multiexpand@  1103;
@@ -439,7 +443,7 @@ and the derived files           multiexpand.ins,
   }
 \gdef\multiexpand@zero#1#2\number1#3\ifcase#4\fi#5%
   {#1\multiexpand@iterate#59#31}
-\gdef\multiexpand@end#1#2\ifcase#3\fi#4;{0 }
+\gdef\multiexpand@end#1#2\ifcase#3\fi#4{#10 }
 %    \end{macrocode}
 % Finally, the two different expansion commands.
 %    \begin{macrocode}
