@@ -9,26 +9,35 @@ Variations on the `\expandafter` TeX primitive
 * Released under the LaTeX Project Public License v1.3c or later
   See http://www.latex-project.org/lppl.txt
 
-Every TeX programmer knows `\expandafter`, and how messy it can become
-when trying to expand several times a very deeply hidden token.  For
-example, say we want to expand `\C` four times before `\A` and `\B` in
-`\A\B\C`.  The traditional approach would be to insert 15 `\expandafter`
-before `\A` and the same number before `\B`.  With this package one can
-do either of the following
+The package defines `\multiexpand`, `\multiexpandafter`, `\MultiExpand`
+and `\MultiExpandAfter`, replacing large chains of `\expandafter`.
+These four commands take as an argument the number of expansion to be
+done.  If eTeX is available, this number is evaluated using `\numexpr`.
 
-    \expandafter\A\expandafter\B\romannumeral\multiexpand{4}\C
-    \expandafter\A\romannumeral\multiexpandafter{4}\B\C
+Say we want to expand `\C` five times before `\A` and `\B` in `\A\B\C`.
+The traditional approach would be to insert 31 `\expandafter` before
+`\A` and the same number before `\B`.  With this package one can use
+any of
+
+    \expandafter\A\expandafter\B\romannumeral\multiexpand{5}\C
+
+    \expandafter\A\romannumeral\multiexpandafter{5}\B\C
+
+    \MultiExpandAfter{2}\A\MultiExpandAfter{5}\B\C
+
+    \MultiExpandAfter{2}\A\MultiExpandAfter{2}\B\MultiExpand{5}\C
 
 In one step of expansion (triggered by the `\expandafter`'s),
-`\romannumeral\multiexpand{4}` expands the following token 4 times,
-whereas `\romannumeral\multiexpandafter{4}` expands the token after
-that 4 times.  For more complicated cases, use `\MultiExpandAfter`:
+`\romannumeral\multiexpand{5}` expands the following token 5 times,
+whereas `\romannumeral\multiexpandafter{5}` expands the token after
+that 5 times.  The macros `\MultiExpandAfter` and `\MultiExpand`
+take two steps of expansion, but do not require `\romannumeral`.
+Another example is that in two steps of expansion,
 
     \MultiExpandAfter{2}\a\MultiExpandAfter{3}{%
-      \MultiExpandAfter{10}\b\MultiExpandAfter{10}\c\d}
+      \MultiExpandAfter{9}\b\MultiExpandAfter{10}\c\d}
 
-expands `\d` 10 times, then `\c` 8 times, then `\b` once.
-The whole process only takes two steps of expansion.
+expands `\d` 10 times, then `\c` 7 times (9-2), then `\b` once (3-2).
 
 The package can be built from the file `multiexpand.dtx' by running
 
@@ -246,9 +255,9 @@ and the derived files           multiexpand.ins,
 %</driver>
 % \fi
 %
-% \CheckSum{127}
+% \CheckSum{126}
 %
-% \def\fileversion{v1.3} \def\filedate{2015/03/03}
+% \def\fileversion{v1.4} \def\filedate{2015/09/20}
 %\title{\texttt{multiexpand}\\
 %  Trigger multiple expansions \\ in one expansion step\thanks{This file
 %    describes version \fileversion, last revised \filedate.}}
@@ -262,8 +271,9 @@ and the derived files           multiexpand.ins,
 % \tableofcontents
 % \changes{v1.0}{2011/02/15}{First version with documentation}
 % \changes{v1.1}{2013/01/08}{Version submitted to CTAN}
-% \changes{v1.2}{2013/01/09}{Use less expandafter for large arguments}
+% \changes{v1.2}{2013/01/09}{Use fewer expandafter for large arguments}
 % \changes{v1.2}{2013/01/09}{Change ME prefix to multiexpand}
+% \changes{v1.4}{2015/09/20}{Clarify that eTeX is not required}
 %
 % \section{Two user commands}
 %
@@ -336,19 +346,19 @@ and the derived files           multiexpand.ins,
 % |\numexpr| from being set to |\relax|, because we are already in a
 % group.
 %    \begin{macrocode}
-\expandafter\ifx\csname numexpr\endcsname\relax
+\expandafter \ifx \csname numexpr\endcsname \relax
 %    \end{macrocode}
 %
 % A helper.
 %    \begin{macrocode}
-\long\gdef\multiexpand@gobble#1{}
+\long \gdef \multiexpand@gobble #1{}
 %    \end{macrocode}
 %
 % The user commands |\multiexpand| and |\multiexpandafter|, to be used
 % after |\romannumeral|.  They only differ a little bit.
 %    \begin{macrocode}
-\gdef\multiexpand{\multiexpand@aux\multiexpand@}
-\gdef\multiexpandafter{\multiexpand@aux\multiexpand@after}
+\gdef \multiexpand {\multiexpand@aux \multiexpand@ }
+\gdef \multiexpandafter {\multiexpand@aux \multiexpand@after }
 %    \end{macrocode}
 % The user commands receives a number, and to accept various forms of
 % numbers we hit it with |\number|.  If it is non-positive, stop the
@@ -357,7 +367,7 @@ and the derived files           multiexpand.ins,
 %    \begin{macrocode}
 \long \gdef \multiexpand@aux #1#2%
   {\expandafter \multiexpand@test \number #2;#1}
-\long \gdef \multiexpand@test #1;#2%
+\gdef \multiexpand@test #1;#2%
   {%
     \ifnum #1>0
       \multiexpand@reverse #1{?\multiexpand@reverse@end }?;;#2%
@@ -421,14 +431,14 @@ and the derived files           multiexpand.ins,
       \ifcase #3 \or 0\or 1\or 2\or 3\or 4\or 5\or 6\or 7\or 8\fi
       #1%
   }
-\gdef\multiexpand@zero#1#2\number1#3\ifcase#4\fi#5%
-  {#1\multiexpand@iterate#59#31}
-\gdef\multiexpand@end#1#2\ifcase#3\fi#4{#10 }
+\gdef \multiexpand@zero #1#2\number 1#3\ifcase #4\fi #5%
+  {#1\multiexpand@iterate #59#31}
+\gdef \multiexpand@end #1#2\ifcase #3\fi #4{#10 }
 %    \end{macrocode}
 % Finally, the two different expansion commands.
 %    \begin{macrocode}
-\gdef\multiexpand@#1;{#1\expandafter;}
-\gdef\multiexpand@after#1;{#1\expandafter;\expandafter}
+\gdef \multiexpand@ #1;{#1\expandafter ;}
+\gdef \multiexpand@after #1;{#1\expandafter ;\expandafter }
 %    \end{macrocode}
 %
 % \subsection{With \hologo{eTeX}}
