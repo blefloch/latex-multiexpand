@@ -2,8 +2,20 @@
 -- Build script for multiexpand
 module = "multiexpand"
 unpackfiles = {"*.dtx"}
-testfiledir = "build/unpacked"
-packtdszip  = true
+checkfiles = {"*.lvt", "*.tlg"}
+testfiledir = "."
+-- packtdszip = true
+-- tdsroot = "generic"
+
+-- Ugly way of getting the README.md unpacked from the dtx
+main = function(target, files)
+  stdunpack = unpack
+  function unpack()
+    stdunpack()
+    cp("README.md", unpackdir, ".")
+  end
+  stdmain(target, files)
+end
 
 kpse.set_program_name("kpsewhich")
 dofile(kpse.lookup("l3build.lua"))
