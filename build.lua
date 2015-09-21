@@ -4,8 +4,7 @@ module = "multiexpand"
 unpackfiles = {"*.dtx"}
 checkfiles = {"*.lvt", "*.tlg"}
 testfiledir = "."
--- packtdszip = true
--- tdsroot = "generic"
+tdsroot = "generic"
 
 -- Ugly way of getting the README.md unpacked from the dtx
 main = function(target, files)
