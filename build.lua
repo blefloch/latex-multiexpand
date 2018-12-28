@@ -15,6 +15,3 @@ main = function(target, files)
   end
   stdmain(target, files)
 end
-
-kpse.set_program_name("kpsewhich")
-dofile(kpse.lookup("l3build.lua"))
